@@ -3,6 +3,12 @@
 import sys
 import matplotlib.pyplot as plt
 
+ARG_LIST = ["--diff", "--graph", "--mean"]
+
+def slope(x1, y1, x2, y2):
+    return (y2 - y1) / (x2 - x1)
+
+
 def read_file(path, error="\nFile not available: "):
     error += path
     try:
@@ -56,20 +62,20 @@ Graph Tool for Sensor Data
 Integers must be stored in text files separated by whitespace (x,y)
 
 Arguments:
-(none) file           Graph data from file
---graph file          Graph data from file
---diff file1 file2    Graph the difference of two data sets stored in files
---mean file           Return mean of x and y values of 
+(none) file1 [file2 ...]           Graph data from file
+--graph file1 [file2 ...]          Graph data from file
+--diff file1 file2                 Graph the difference of two data sets stored in files
+--mean file                        Return mean of x and y values of 
 """
 
 if __name__ == "__main__":
-    for arg_n, arg in enumerate(sys.argv[1:]):
+    for arg_n, arg in enumerate(sys.argv[1:], start = 1):
         if arg == "--help":
             print(help_message)
 
         if arg == "--diff":
-            dataA = unpack_coords(read_file(sys.argv[arg_n + 2]))
-            dataB = unpack_coords(read_file(sys.argv[arg_n + 3]))
+            dataA = unpack_coords(read_file(sys.argv[arg_n + 1]))
+            dataB = unpack_coords(read_file(sys.argv[arg_n + 2]))
             output_graph = graph_diff(dataA[1], dataB[1])
             plt.plot(output_graph[0], output_graph[1], 'bo')
             plt.xlabel("samples")
@@ -79,22 +85,41 @@ if __name__ == "__main__":
             plt.show()
 
         if  arg == "--mean":
-            data = unpack_coords(read_file(sys.argv[arg_n + 2]))
+            data = unpack_coords(read_file(sys.argv[arg_n + 1]))
+            print("'{0}'".format(sys.argv[arg_n + 1]))
             print("x average: {0}\ny average: {1}".format(
                 data_mean(data[0]), data_mean(data[1])))
 
         if arg == "--graph":
-            data = unpack_coords(read_file(sys.argv[arg_n + 2]))
-            plt.plot(data[0], data[1], 'bo')
+            graphs = []
+            title = "Graph of "
+            for file_arg in sys.argv[arg_n + 1:]:
+                if file_arg in ARG_LIST:
+                    break
+                data = unpack_coords(read_file(file_arg))
+                graphs.append(data[0])
+                graphs.append(data[1])
+                title += "'{0}', ".format(file_arg)
+            title = title[:-2]
+            plt.plot(*graphs)
             plt.xlabel("samples")
             plt.ylabel("y")
-            plt.suptitle("Graph of '{0}'".format(sys.argv[arg_n + 2]))
+            plt.suptitle(title)
             plt.show()
 
-        elif len(sys.argv) == 2:
-            data = unpack_coords(read_file(arg))
-            plt.plot(data[0], data[1], 'bo')
+        elif arg_n == 1 and arg not in ARG_LIST:
+            graphs = []
+            title = "Graph of "
+            for file_arg in sys.argv[arg_n:]:
+                if file_arg in ARG_LIST:
+                    break
+                data = unpack_coords(read_file(file_arg))
+                graphs.append(data[0])
+                graphs.append(data[1])
+                title += "'{0}', ".format(file_arg)
+            title = title[:-2]
+            plt.plot(*graphs)
             plt.xlabel("samples")
             plt.ylabel("y")
-            plt.suptitle("Graph of '{0}'".format(arg))
+            plt.suptitle(title)
             plt.show()
